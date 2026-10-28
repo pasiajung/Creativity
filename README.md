@@ -165,21 +165,77 @@ npm run build
    - **규칙** 탭의 기존 내용을 모두 지우고, 저장소의 `firestore.rules` 파일 내용을 통째로 붙여 넣은 뒤 → **게시**
    - 관리자 이메일이나 허용 도메인을 바꿨다면 규칙도 다시 붙여 넣고 게시해야 합니다.
 5. **Netlify 환경 변수 입력 → 재배포**
-   - Netlify → Site configuration → **Environment variables** → 아래 6개를 추가합니다. (값은 1번에서 메모한 것)
-
-     | 이름 | Firebase 값 |
-     |---|---|
-     | `VITE_FIREBASE_API_KEY` | apiKey |
-     | `VITE_FIREBASE_AUTH_DOMAIN` | authDomain |
-     | `VITE_FIREBASE_PROJECT_ID` | projectId |
-     | `VITE_FIREBASE_STORAGE_BUCKET` | storageBucket |
-     | `VITE_FIREBASE_MESSAGING_SENDER_ID` | messagingSenderId |
-     | `VITE_FIREBASE_APP_ID` | appId |
-   - Deploys → **Trigger deploy → Deploy site** 로 다시 배포합니다. (환경 변수는 다시 배포해야 반영됩니다)
-   - 내 컴퓨터에서 쓰려면 `.env.example`을 복사해 `.env` 파일을 만들고 같은 값을 넣습니다. `.env`는 GitHub에 올라가지 않습니다.
+   - 아래 [4-1. Netlify 환경 변수 설정 자세히](#4-1-netlify-환경-변수-설정-자세히)를 따라 합니다.
 6. **무료 사용량 확인하기**
    - Firestore Database → **사용량** 탭에서 하루 읽기·쓰기 횟수를 확인합니다.
    - Spark 요금제는 한도를 넘으면 과금되지 않고 그날 기능이 멈출 뿐이므로 요금 걱정은 없습니다.
+
+### 4-1. Netlify 환경 변수 설정 자세히
+
+환경 변수는 Firebase 설정값을 코드에 직접 적지 않고 Netlify에 따로 맡겨 두는 방법입니다.
+사이트를 빌드할 때 Netlify가 이 값을 넣어 줍니다.
+
+#### ① 넣을 값 찾기
+Firebase 콘솔 → ⚙️ **프로젝트 설정** → **일반** 탭 → 아래 **내 앱**의 웹 앱 → **SDK 설정 및 구성** → **구성**을 선택하면 `const firebaseConfig = { ... }` 코드가 보입니다.
+여기서 6개 값을 아래 이름으로 옮깁니다. (따옴표 안의 글자만 옮깁니다)
+
+| Netlify 에 넣을 이름 (Key) | firebaseConfig 의 값 | 값 모양 예시 |
+|---|---|---|
+| `VITE_FIREBASE_API_KEY` | `apiKey` | `AIza`로 시작하는 39자 |
+| `VITE_FIREBASE_AUTH_DOMAIN` | `authDomain` | `프로젝트ID.firebaseapp.com` |
+| `VITE_FIREBASE_PROJECT_ID` | `projectId` | `creativity-46db8` |
+| `VITE_FIREBASE_STORAGE_BUCKET` | `storageBucket` | `프로젝트ID.firebasestorage.app` |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | `messagingSenderId` | 숫자 12자리 |
+| `VITE_FIREBASE_APP_ID` | `appId` | `1:숫자:web:영문숫자` |
+
+- `measurementId`(G-로 시작)는 **넣지 않습니다.** 애널리틱스를 쓰지 않기 때문입니다.
+- 이름은 대문자·밑줄(_)까지 **정확히 똑같이** 적습니다. 한 글자라도 다르면 사이트가 값을 찾지 못합니다.
+- 값 앞뒤에 따옴표나 띄어쓰기를 넣지 않습니다.
+
+#### ② Netlify 에 한 번에 붙여 넣기
+1. [app.netlify.com](https://app.netlify.com) 로그인 → 사이트 목록에서 **이 사이트** 클릭
+2. 왼쪽 메뉴 **Site configuration** → **Environment variables**
+3. **Add a variable** → **Import from a .env file**
+4. 입력칸에 아래 형식으로 6줄을 붙여 넣습니다. (`=` 오른쪽을 내 값으로 바꿈)
+   ```
+   VITE_FIREBASE_API_KEY=apiKey값
+   VITE_FIREBASE_AUTH_DOMAIN=authDomain값
+   VITE_FIREBASE_PROJECT_ID=projectId값
+   VITE_FIREBASE_STORAGE_BUCKET=storageBucket값
+   VITE_FIREBASE_MESSAGING_SENDER_ID=messagingSenderId값
+   VITE_FIREBASE_APP_ID=appId값
+   ```
+5. **Contains secret values**(비밀값) 체크 칸이 있으면 **체크하지 않습니다.**
+   이 값들은 원래 웹사이트 코드에 공개되는 값이라, 비밀값으로 표시하면 Netlify 의 비밀값 검사가 배포를 실패시킬 수 있습니다.
+   (데이터는 `firestore.rules` 보안 규칙이 지킵니다.)
+6. Scopes·Deploy contexts 는 기본값(**All**) 그대로 두고 **Import variables**
+7. 목록에 6개가 모두 보이는지 확인합니다.
+
+> 한 개씩 넣으려면 3번에서 **Add a single variable** 을 고르고, **Key** 에 이름, **Values** 에 값을 넣고 **Create variable** 을 누릅니다. 6번 반복합니다.
+
+#### ③ 다시 배포하기 (꼭 해야 함)
+환경 변수는 **새로 배포할 때만** 반영됩니다.
+1. 왼쪽 메뉴 **Deploys** → 오른쪽 **Trigger deploy** → **Deploy site**
+2. 맨 위 항목이 **Published**(초록색)가 될 때까지 1~2분 기다립니다.
+   **Failed**(빨간색)이면 그 항목을 눌러 로그 마지막 부분을 확인합니다.
+
+#### ④ 잘 됐는지 확인하기
+1. 사이트를 열고 **Ctrl + Shift + R**(맥: Cmd + Shift + R)로 새로고침합니다.
+2. 오른쪽 위 버튼이 **"로그인 (준비 중)"** → **"Google 로그인"** 으로 바뀌었는지 봅니다.
+3. **Google 로그인** → 관리자 계정 선택 → 소속 입력 창이 뜨면 성공입니다.
+4. 연구 상세 페이지에 댓글을 하나 달아 봅니다. 다른 사람 댓글에도 **수정·삭제** 버튼이 보이면 관리자 권한도 정상입니다.
+
+#### 문제가 생기면
+| 증상 | 원인과 해결 |
+|---|---|
+| 여전히 "로그인 (준비 중)" | 재배포를 안 했거나 이름에 오타가 있습니다. ③을 다시 하고 이름 철자를 확인하세요 |
+| "승인된 도메인에 등록되어 있지 않습니다" | Firebase 콘솔 → Authentication → 설정 → **승인된 도메인**에 Netlify 주소를 `https://` 없이 정확히 넣었는지 확인하세요 |
+| "팝업이 차단되었습니다" | 브라우저 주소창 오른쪽의 팝업 차단 아이콘을 눌러 허용하세요 |
+| 댓글 등록 시 "저장하지 못했습니다" | Firestore **규칙** 탭에 `firestore.rules` 내용을 붙여 넣고 **게시**했는지 확인하세요 |
+
+#### 내 컴퓨터에서 실제 Firebase 로 실행하려면
+프로젝트 폴더의 `.env.example` 을 복사해 이름을 `.env` 로 바꾸고, ②-4와 같은 6줄을 넣은 뒤 `npm run dev` 를 실행합니다.
+`.env` 파일은 GitHub 에 올라가지 않습니다.
 
 ---
 
