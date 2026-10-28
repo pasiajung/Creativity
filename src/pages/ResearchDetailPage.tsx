@@ -3,13 +3,14 @@ import CitationButton from '../components/CitationButton'
 import DiscussionSection from '../components/DiscussionSection'
 import ExternalLink from '../components/ExternalLink'
 import PageHeader from '../components/PageHeader'
+import ResearchTypeBadge from '../components/ResearchTypeBadge'
 import Tag from '../components/Tag'
 import { research } from '../content/research'
 import { usePageTitle } from '../lib/usePageTitle'
 import NotFoundPage from './NotFoundPage'
 
 const linkButton =
-  'inline-block rounded-md border border-brand-200 px-3 py-1.5 text-sm font-medium text-brand-800 hover:bg-brand-50 dark:border-brand-800 dark:text-brand-200 dark:hover:bg-brand-950'
+  'inline-block rounded-full border border-brand-200 bg-white px-4 py-1.5 text-sm font-medium text-brand-800 transition hover:border-accent-400 hover:text-accent-700 dark:border-white/15 dark:bg-transparent dark:text-brand-200 dark:hover:text-accent-200'
 
 export default function ResearchDetailPage() {
   const { slug } = useParams()
@@ -32,13 +33,14 @@ export default function ResearchDetailPage() {
       <PageHeader
         eyebrow={
           <>
-            {item.type} · {item.year}
+            <ResearchTypeBadge type={item.type} />
+            <span className="tabular-nums">{item.year}</span>
           </>
         }
         title={item.title}
       />
 
-      <dl className="mb-8 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[6rem_1fr]">
+      <dl className="mb-10 grid gap-x-6 gap-y-3 rounded-2xl bg-brand-50/60 p-6 text-sm ring-1 ring-brand-100 sm:grid-cols-[6rem_1fr] dark:bg-white/[0.03] dark:ring-white/10">
         <dt className="font-medium text-slate-500 dark:text-slate-400">저자</dt>
         <dd>{item.authors.join(', ')}</dd>
         <dt className="font-medium text-slate-500 dark:text-slate-400">게재·발표</dt>
@@ -60,15 +62,15 @@ export default function ResearchDetailPage() {
       </dl>
 
       <section aria-labelledby="abstract-heading" className="mb-8">
-        <h2 id="abstract-heading" className="mb-3 text-lg font-semibold text-slate-900 dark:text-white">
+        <h2 id="abstract-heading" className="mb-4 flex items-center gap-2.5 text-lg font-semibold text-brand-950 before:h-4 before:w-1 before:rounded-full before:bg-accent-400 dark:text-white">
           초록
         </h2>
-        <p className="leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-300">{item.abstract}</p>
+        <p className="text-[17px] leading-8 whitespace-pre-line text-slate-700 dark:text-slate-300">{item.abstract}</p>
       </section>
 
       {hasLinks && (
         <section aria-labelledby="links-heading" className="mb-8">
-          <h2 id="links-heading" className="mb-3 text-lg font-semibold text-slate-900 dark:text-white">
+          <h2 id="links-heading" className="mb-4 flex items-center gap-2.5 text-lg font-semibold text-brand-950 before:h-4 before:w-1 before:rounded-full before:bg-accent-400 dark:text-white">
             링크
           </h2>
           <ul className="flex flex-wrap gap-2">

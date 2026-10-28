@@ -4,14 +4,14 @@ import Tag from '../components/Tag'
 import { profile } from '../content/profile'
 import { usePageTitle } from '../lib/usePageTitle'
 
-const sectionHeading = 'mb-4 text-lg font-semibold text-slate-900 dark:text-white'
+const sectionHeading = 'mb-5 flex items-center gap-2.5 text-lg font-semibold text-brand-950 before:h-4 before:w-1 before:rounded-full before:bg-accent-400 dark:text-white'
 
 function Timeline({ items }: { items: { period: string; description: string }[] }) {
   return (
     <ul className="space-y-2">
       {items.map((it) => (
         <li key={`${it.period}-${it.description}`} className="grid gap-1 sm:grid-cols-[10rem_1fr] sm:gap-4">
-          <span className="text-sm text-slate-500 dark:text-slate-400">{it.period}</span>
+          <span className="text-sm font-medium text-accent-600 tabular-nums dark:text-accent-300">{it.period}</span>
           <span>{it.description}</span>
         </li>
       ))}
@@ -32,15 +32,15 @@ export default function AboutPage() {
           <img
             src={profile.photoUrl}
             alt={`${profile.name} ${profile.position} 프로필 사진`}
-            className="h-28 w-28 rounded-full object-cover ring-4 ring-brand-50 dark:ring-brand-950"
+            className="h-28 w-28 rounded-full object-cover ring-4 ring-accent-200 dark:ring-accent-700/40"
           />
         ) : (
-          <div aria-hidden="true" className="flex h-28 w-28 items-center justify-center rounded-full bg-brand-800 text-3xl font-bold text-white">
+          <div aria-hidden="true" className="flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-brand-800 to-brand-950 text-3xl font-bold text-accent-200 ring-4 ring-accent-200 dark:ring-accent-700/40">
             {profile.name.replace(/[[\]]/g, '').slice(0, 1)}
           </div>
         )}
         <div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <p className="text-2xl font-bold text-brand-950 dark:text-white">
             {profile.name} <span className="text-lg font-medium text-slate-600 dark:text-slate-400">{profile.position}</span>
           </p>
           <p className="mt-1 text-slate-600 dark:text-slate-400">{profile.affiliation}</p>
@@ -53,7 +53,7 @@ export default function AboutPage() {
             약력
           </h2>
           <Timeline items={profile.career} />
-          <h3 className="mt-6 mb-3 font-semibold text-slate-900 dark:text-white">학력</h3>
+          <h3 className="mt-6 mb-3 font-semibold text-brand-950 dark:text-white">학력</h3>
           <Timeline items={profile.education} />
         </section>
 

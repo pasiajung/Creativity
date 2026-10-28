@@ -7,18 +7,34 @@
   --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
     'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
 
-  /* 사이트 포인트 색(남색 계열). 색을 바꾸고 싶으면 이 값들을 고치면 됩니다. */
-  --color-brand-50: #f1f5fb;
-  --color-brand-100: #e2e9f5;
-  --color-brand-200: #c3d1ea;
-  --color-brand-300: #93acd8;
-  --color-brand-400: #5f82c0;
-  --color-brand-500: #3d62a8;
-  --color-brand-600: #2d4d8e;
-  --color-brand-700: #253f75;
-  --color-brand-800: #1e3a6e;
-  --color-brand-900: #172a4f;
-  --color-brand-950: #0f1b33;
+  /* ✏️ 사이트 색상. 값을 바꾸면 사이트 전체 색이 함께 바뀝니다. */
+
+  /* 주 색상: 깊은 남색 */
+  --color-brand-50: #f2f5fa;
+  --color-brand-100: #e3e9f4;
+  --color-brand-200: #c5d2e8;
+  --color-brand-300: #9bb1d6;
+  --color-brand-400: #6b88bd;
+  --color-brand-500: #4766a3;
+  --color-brand-600: #344f88;
+  --color-brand-700: #2a406f;
+  --color-brand-800: #1f3159;
+  --color-brand-900: #152345;
+  --color-brand-950: #0c1530;
+
+  /* 보조 색상: 차분한 황동(골드) */
+  --color-accent-50: #fbf7ef;
+  --color-accent-100: #f4ebd7;
+  --color-accent-200: #e9d6b0;
+  --color-accent-300: #dbbd84;
+  --color-accent-400: #cba25d;
+  --color-accent-500: #b48843;
+  --color-accent-600: #946c33;
+  --color-accent-700: #75542a;
+
+  /* 다크 모드 배경 */
+  --color-ink-900: #111b33;
+  --color-ink-950: #0a1124;
 }
 
 html {
@@ -27,10 +43,14 @@ html {
 }
 
 body {
-  @apply bg-white text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200;
+  @apply bg-white text-slate-700 antialiased dark:bg-ink-950 dark:text-slate-300;
+}
+
+::selection {
+  @apply bg-accent-200 text-brand-950;
 }
 
 /* 키보드로 이동할 때 초점 위치가 잘 보이도록 */
 :focus-visible {
-  @apply outline-2 outline-offset-2 outline-brand-500;
+  @apply outline-2 outline-offset-2 outline-accent-500;
 }

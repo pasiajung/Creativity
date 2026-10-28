@@ -8,7 +8,7 @@ export default function LoginButton() {
       type="button"
       disabled
       title="로그인 기능은 준비 중입니다"
-      className="cursor-not-allowed rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-400 dark:border-slate-700 dark:text-slate-500"
+      className="cursor-not-allowed rounded-full border border-slate-200 px-4 py-1.5 text-sm font-medium text-slate-400 dark:border-white/10 dark:text-slate-500"
     >
       로그인<span className="hidden sm:inline"> (준비 중)</span>
     </button>

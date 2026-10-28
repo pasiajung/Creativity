@@ -7,7 +7,7 @@ import { teaching } from '../content/teaching'
 import { usePageTitle } from '../lib/usePageTitle'
 import NotFoundPage from './NotFoundPage'
 
-const sectionHeading = 'mb-3 text-lg font-semibold text-slate-900 dark:text-white'
+const sectionHeading = 'mb-4 flex items-center gap-2.5 text-lg font-semibold text-brand-950 before:h-4 before:w-1 before:rounded-full before:bg-accent-400 dark:text-white'
 
 export default function TeachingDetailPage() {
   const { slug } = useParams()
@@ -54,12 +54,12 @@ export default function TeachingDetailPage() {
           <h2 id="materials-heading" className={sectionHeading}>
             수업 자료
           </h2>
-          <ul className="divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+          <ul className="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 dark:divide-white/10 dark:border-white/10">
             {item.materials.map((m) => (
               <li key={m.url}>
                 <ExternalLink
                   href={m.url}
-                  className="block px-4 py-3 text-brand-800 hover:bg-brand-50 dark:text-brand-200 dark:hover:bg-brand-950"
+                  className="block px-5 py-3.5 font-medium text-brand-800 transition hover:bg-accent-50 hover:text-accent-700 dark:text-brand-200 dark:hover:bg-white/5"
                 >
                   {m.label}
                 </ExternalLink>

@@ -17,12 +17,12 @@ export default function MainLayout() {
       {/* 키보드 사용자가 메뉴를 건너뛰고 본문으로 바로 갈 수 있는 링크 (Tab 키를 누르면 나타남) */}
       <a
         href="#main"
-        className="sr-only z-30 rounded-md bg-brand-800 px-4 py-2 text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        className="sr-only z-30 rounded-md bg-brand-900 px-4 py-2 text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
       >
         본문 바로가기
       </a>
       <Header />
-      <main id="main" tabIndex={-1} className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 outline-none sm:px-6">
+      <main id="main" tabIndex={-1} className="mx-auto w-full max-w-5xl flex-1 px-4 py-12 outline-none sm:px-6">
         <Outlet />
       </main>
       <Footer />
