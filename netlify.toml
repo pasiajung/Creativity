@@ -5,7 +5,7 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "22"
+  NODE_VERSION = "24"
 
 # 주소창에 /research/abc 처럼 직접 입력해도 페이지가 열리도록 하는 설정(SPA 리다이렉트)
 [[redirects]]
