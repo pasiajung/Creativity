@@ -1,12 +1,12 @@
 # [이름] 교수 연구 포트폴리오
 
 계명대학교 교수학습개발센터(CTL) [이름] 교수의 연구 성과와 수업 자료·수업 방식을 소개하는 웹사이트입니다.
-동료 교수님들이 Google 계정으로 로그인해 댓글과 토론으로 의견을 나누는 기능은 **2단계(Phase 2)** 에서 추가됩니다.
+동료 교수님들이 Google 계정으로 로그인해 연구·수업에 댓글을 달고, 토론 게시판에서 의견을 나눌 수 있습니다.
 
 | 단계 | 내용 | 상태 |
 |---|---|---|
 | Phase 1 | 사이트 틀(홈·연구·수업·토론·소개), Netlify 배포 준비 | ✅ 완료 |
-| Phase 2 | Firebase 연동(Google 로그인, 댓글, 토론 게시판) | 준비 중 |
+| Phase 2 | Firebase 연동(Google 로그인, 댓글, 토론 게시판) | ✅ 완료 |
 
 ---
 
@@ -146,9 +146,10 @@ npm run build
 
 ---
 
-## 4. Firebase 연동 체크리스트 (Phase 2에서 진행)
+## 4. Firebase 연동 체크리스트
 
-> Phase 2 작업이 끝난 뒤에 진행합니다. **무료 Spark 요금제만** 사용하며, 유료(Blaze) 전환은 하지 않습니다.
+> **무료 Spark 요금제만** 사용합니다. 유료(Blaze) 전환, Cloud Functions, Cloud Storage, Firebase Hosting, Analytics 는 쓰지 않습니다.
+> Firebase 콘솔이 보여주는 설정 코드(`initializeApp`, `getAnalytics` …)는 붙여 넣을 필요가 없습니다. 값 6개만 환경 변수로 넣으면 됩니다(`measurementId`는 쓰지 않음).
 
 1. **프로젝트 생성 → 웹 앱 등록 → 설정값 복사**
    - [Firebase 콘솔](https://console.firebase.google.com) → 프로젝트 추가 (Google 애널리틱스는 꺼도 됩니다)
@@ -161,7 +162,8 @@ npm run build
    - Authentication → 설정 → **승인된 도메인** → 도메인 추가 → `xxx.netlify.app` (내 Netlify 주소)
 4. **Firestore 생성 → 보안 규칙 게시**
    - Firestore Database → 데이터베이스 만들기 → 위치 **asia-northeast3 (서울)** 권장 (나중에 바꿀 수 없음) → 프로덕션 모드
-   - **규칙** 탭에 저장소의 `firestore.rules` 파일 내용을 통째로 붙여 넣고 → **게시**
+   - **규칙** 탭의 기존 내용을 모두 지우고, 저장소의 `firestore.rules` 파일 내용을 통째로 붙여 넣은 뒤 → **게시**
+   - 관리자 이메일이나 허용 도메인을 바꿨다면 규칙도 다시 붙여 넣고 게시해야 합니다.
 5. **Netlify 환경 변수 입력 → 재배포**
    - Netlify → Site configuration → **Environment variables** → 아래 6개를 추가합니다. (값은 1번에서 메모한 것)
 
@@ -181,7 +183,93 @@ npm run build
 
 ---
 
-## 5. 폴더 구조 (참고용)
+## 5. 토론·댓글 기능 안내
+
+| 기능 | 누가 할 수 있나 |
+|---|---|
+| 댓글·토론 글 읽기 | 누구나 (로그인 불필요) |
+| 댓글·답글·토론 글 쓰기 | Google 로그인한 사람 |
+| 수정·삭제 | 작성자 본인, 관리자 |
+
+- **관리자**: `src/config.ts`의 `ADMIN_EMAILS`와 `firestore.rules`의 `isAdmin()`에 적힌 이메일(현재 `pasiajung@gmail.com`)입니다. 두 곳을 항상 똑같이 맞춰 주세요.
+- **학교 계정만 참여하게 하려면**
+  1. `src/config.ts`에서 `ALLOWED_EMAIL_DOMAIN = 'kmu.ac.kr'`로 바꿉니다.
+  2. `firestore.rules`의 `canParticipate()` 안에 있는 `// && request.auth...` 줄 맨 앞의 `//`를 지웁니다.
+  3. 규칙을 Firebase 콘솔에 다시 게시하고, 코드는 GitHub에 올려 재배포합니다.
+- **첫 로그인** 때 소속을 묻는 창이 한 번 뜹니다(선택 사항, 건너뛰어도 됨).
+- **관련 토론**: 연구·수업 상세 페이지의 "이 주제로 토론 글 쓰기"를 누르면 그 항목이 연결된 토론 글을 쓸 수 있고, 상세 페이지에 "관련 토론"으로 표시됩니다.
+- 토론 글을 삭제하면 그 글의 답글은 화면에서 더 이상 보이지 않습니다. (무료 요금제에서는 서버 기능이 없어 답글 데이터는 남지만, 용량은 매우 작습니다.)
+
+### 무료 한도를 아끼기 위해 적용한 것
+- 목록은 실시간 연결(onSnapshot) 없이 **20개씩 "더 보기"** 로만 불러옵니다.
+- 모든 조회에 개수 제한(limit)을 걸었습니다.
+- **복합 색인이 필요 없도록** 토론 글 번호를 "작성 시각을 거꾸로 센 숫자"로 만들어, 번호 순서가 곧 최신순이 되게 했습니다. 따라서 Firestore 콘솔에서 색인을 따로 만들 필요가 없습니다.
+
+---
+
+## 6. 보안 규칙 검증
+
+### 검증 시나리오 (자동 테스트 30개 중 핵심)
+
+| # | 시나리오 | 기대 결과 | 확인 |
+|---|---|---|---|
+| 1 | 로그인하지 않은 사용자가 댓글·토론 글 작성 | ❌ 거부 | ✅ 통과 |
+| 2 | 다른 사람이 쓴 댓글·토론 글을 수정 | ❌ 거부 | ✅ 통과 |
+| 3 | 2001자 댓글·답글 작성 (2000자는 허용) | ❌ 거부 | ✅ 통과 |
+| 4 | 관리자가 다른 사람의 댓글·토론 글·답글 삭제 | ✅ 허용 | ✅ 통과 |
+| 5 | 다른 사람 이름(authorId)으로 작성 | ❌ 거부 | ✅ 통과 |
+| 6 | 작성 시각(createdAt)을 직접 지정 | ❌ 거부 | ✅ 통과 |
+| 7 | 정해지지 않은 필드 추가 (예: isPinned) | ❌ 거부 | ✅ 통과 |
+| 8 | 수정하면서 authorId·createdAt 변경 | ❌ 거부 | ✅ 통과 |
+| 9 | 답글 수(replyCount)를 ±1 이 아닌 값으로 변경 | ❌ 거부 | ✅ 통과 |
+| 10 | replyCount 를 올리지 않고 답글만 작성 | ❌ 거부 | ✅ 통과 |
+| 11 | 제목 101자 / 본문 5001자 / 없는 카테고리 | ❌ 거부 | ✅ 통과 |
+| 12 | 이메일 인증이 안 된 관리자 이메일로 삭제 | ❌ 거부 | ✅ 통과 |
+| 13 | 다른 사람의 프로필(users) 읽기 | ❌ 거부 | ✅ 통과 |
+| 14 | 규칙에 없는 컬렉션 읽기·쓰기 | ❌ 거부 | ✅ 통과 |
+
+전체 테스트는 `tests/firestore.rules.test.mjs`에 있습니다.
+
+### Firebase 에뮬레이터로 검증하기
+
+에뮬레이터는 내 컴퓨터에서 돌아가는 "가짜 Firebase"입니다. 실제 데이터와 무료 사용량에 전혀 영향을 주지 않습니다.
+
+**준비 (한 번만)**: [Java](https://adoptium.net/ko/) 21 이상을 설치하고, 프로젝트 폴더에서 `npm install`을 실행합니다.
+
+**① 보안 규칙 자동 검증**
+```bash
+npm run test:rules
+```
+마지막에 `# pass 30`, `# fail 0`이 나오면 모든 규칙이 의도대로 동작하는 것입니다.
+(중간에 보이는 `PERMISSION_DENIED` 메시지는 "거부되어야 할 요청이 거부됐다"는 정상 기록입니다.)
+
+**② 사이트를 에뮬레이터에 연결해 직접 눌러 보기**
+1. 프로젝트 폴더에 `.env.local` 파일을 만들고 아래 내용을 넣습니다.
+   ```
+   VITE_FIREBASE_API_KEY=demo-key
+   VITE_FIREBASE_AUTH_DOMAIN=demo-creativity.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=demo-creativity
+   VITE_FIREBASE_STORAGE_BUCKET=demo-creativity.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=0
+   VITE_FIREBASE_APP_ID=1:0:web:0
+   VITE_USE_FIREBASE_EMULATOR=true
+   ```
+2. 터미널 창 하나에서 에뮬레이터를 켭니다.
+   ```bash
+   npm run emulators
+   ```
+3. 다른 터미널 창에서 사이트를 켭니다.
+   ```bash
+   npm run dev
+   ```
+4. 로그인 버튼을 누르면 가짜 Google 로그인 창이 뜹니다. **Add new account** 를 눌러 아무 이메일로 로그인해 보세요.
+   관리자 기능을 시험하려면 `pasiajung@gmail.com`으로 로그인합니다.
+5. `http://127.0.0.1:4000` 에서 에뮬레이터에 저장된 데이터를 볼 수 있습니다.
+6. 테스트가 끝나면 `.env.local` 파일을 지우거나 `VITE_USE_FIREBASE_EMULATOR` 줄을 지웁니다.
+
+---
+
+## 7. 폴더 구조 (참고용)
 
 ```
 src/
@@ -191,12 +279,15 @@ src/
 ├─ pages/       페이지 화면 (홈, 연구, 수업, 토론, 소개, 404)
 ├─ components/  여러 페이지에서 쓰는 화면 조각 (헤더, 카드, 토론 영역 등)
 ├─ layouts/     공통 틀 (헤더 + 본문 + 푸터)
-├─ services/    댓글·토론 기능 (지금은 "준비 중" 목업, Phase 2에서 Firestore로 교체)
-└─ lib/         보조 기능 (페이지 제목, APA 인용, 다크 모드)
+├─ services/    댓글·토론 기능 (Firestore 구현, Firebase 설정이 없으면 "준비 중" 목업)
+└─ lib/         보조 기능 (Firebase 초기화, 로그인 상태, 페이지 제목, APA 인용, 다크 모드)
+firestore.rules  Firestore 보안 규칙 (Firebase 콘솔에 붙여 넣는 파일)
+tests/           보안 규칙 자동 검증
 ```
 
-## 6. 사용한 기술
+## 8. 사용한 기술
 
 - Vite + React + TypeScript, Tailwind CSS, React Router
+- Firebase Authentication(Google), Cloud Firestore (무료 Spark 요금제)
 - 글꼴: Pretendard (CDN)
 - 배포: Netlify (설정: `netlify.toml`)

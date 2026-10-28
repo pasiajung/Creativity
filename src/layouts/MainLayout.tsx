@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router'
+import AffiliationDialog from '../components/AffiliationDialog'
+import AuthErrorBanner from '../components/AuthErrorBanner'
 import Footer from '../components/Footer'
 import Header from '../components/Header'
 
@@ -22,10 +24,12 @@ export default function MainLayout() {
         본문 바로가기
       </a>
       <Header />
+      <AuthErrorBanner />
       <main id="main" tabIndex={-1} className="mx-auto w-full max-w-5xl flex-1 px-4 py-12 outline-none sm:px-6">
         <Outlet />
       </main>
       <Footer />
+      <AffiliationDialog />
     </div>
   )
 }

@@ -59,7 +59,8 @@ export interface DiscussionService {
 
   // 연구·수업 상세 댓글 (targetId 예: "research-{slug}", "teaching-{slug}")
   listComments(targetId: string, cursor?: PageCursor | null): Promise<Page<Comment>>
-  addComment(targetId: string, text: string): Promise<void>
+  /** 저장한 댓글을 돌려줍니다(화면에 바로 추가하기 위해) */
+  addComment(targetId: string, text: string): Promise<Comment>
   updateComment(targetId: string, commentId: string, text: string): Promise<void>
   deleteComment(targetId: string, commentId: string): Promise<void>
 
@@ -74,7 +75,7 @@ export interface DiscussionService {
 
   // 토론 글의 답글
   listReplies(threadId: string, cursor?: PageCursor | null): Promise<Page<Comment>>
-  addReply(threadId: string, text: string): Promise<void>
+  addReply(threadId: string, text: string): Promise<Comment>
   updateReply(threadId: string, replyId: string, text: string): Promise<void>
   deleteReply(threadId: string, replyId: string): Promise<void>
 }

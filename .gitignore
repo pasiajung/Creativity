@@ -21,3 +21,7 @@ npm-debug.log*
 .firebase
 firebase-debug.log*
 firestore-debug.log*
+
+# Firebase 에뮬레이터
+.firebaserc.local
+ui-debug.log
