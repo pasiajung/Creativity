@@ -40,12 +40,29 @@ function toAuthUser(u: User): AuthUser {
   return { uid: u.uid, displayName: u.displayName || u.email || '이름 없음', photoURL: u.photoURL, email: u.email }
 }
 
+/** Firebase 로그인 오류 코드별 안내 (관리자가 원인을 찾기 쉽도록 설정 위치를 함께 적음) */
+const SIGN_IN_ERRORS: Record<string, string> = {
+  'auth/popup-blocked': '팝업이 차단되었습니다. 브라우저 주소창의 팝업 차단을 해제한 뒤 다시 시도해 주세요.',
+  'auth/unauthorized-domain':
+    '이 사이트 주소가 Firebase에 등록되어 있지 않습니다. (Firebase 콘솔 > Authentication > 설정 > 승인된 도메인)',
+  'auth/operation-not-allowed':
+    'Google 로그인이 꺼져 있습니다. (Firebase 콘솔 > Authentication > 로그인 방법 > Google 사용 설정)',
+  'auth/configuration-not-found':
+    'Firebase Authentication이 아직 시작되지 않았습니다. (Firebase 콘솔 > Authentication > 시작하기, 그 뒤 Google 사용 설정)',
+  'auth/invalid-api-key': 'Firebase API 키가 올바르지 않습니다. (Netlify 환경 변수 VITE_FIREBASE_API_KEY 확인)',
+  'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
+    'Firebase API 키가 올바르지 않습니다. (Netlify 환경 변수 VITE_FIREBASE_API_KEY 확인)',
+  'auth/invalid-app-credential': 'Firebase 앱 설정값이 올바르지 않습니다. (Netlify 환경 변수 6개 확인)',
+  'auth/network-request-failed': '네트워크 연결을 확인해 주세요.',
+  'auth/user-disabled': '사용이 중지된 계정입니다.',
+}
+
 function signInErrorMessage(e: unknown): string | null {
+  // 원인 확인용으로 브라우저 개발자 도구(F12) 콘솔에도 남깁니다.
+  console.error('[로그인 오류]', e)
   if (e instanceof FirebaseError) {
     if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return null
-    if (e.code === 'auth/popup-blocked') return '팝업이 차단되었습니다. 브라우저 주소창의 팝업 차단을 해제한 뒤 다시 시도해 주세요.'
-    if (e.code === 'auth/unauthorized-domain') return '이 사이트 주소가 Firebase 승인된 도메인에 등록되어 있지 않습니다.'
-    if (e.code === 'auth/network-request-failed') return '네트워크 연결을 확인해 주세요.'
+    return SIGN_IN_ERRORS[e.code] ?? `로그인하지 못했습니다. (오류 코드: ${e.code})`
   }
   return '로그인하지 못했습니다. 잠시 후 다시 시도해 주세요.'
 }
