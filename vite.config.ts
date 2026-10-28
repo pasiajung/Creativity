@@ -17,7 +17,31 @@ export default defineConfig(({ command, mode }) => {
     const env = { ...loadEnv(mode, process.cwd(), 'VITE_'), ...process.env }
     const missing = FIREBASE_ENV_NAMES.filter((name) => !env[name]?.trim())
     if (missing.length === 0) {
-      console.log('\n[Firebase] 환경 변수 6개 확인됨 → 로그인·댓글 기능이 켜집니다.\n')
+      // 값의 "모양"이 맞는지 점검합니다. (값 자체는 기록에 남기지 않고 길이만 표시)
+      const clean = (v: string) => v.trim().replace(/^["']|["'],?$/g, '').trim()
+      const formats: Record<string, [RegExp, string]> = {
+        VITE_FIREBASE_API_KEY: [/^AIza[0-9A-Za-z_-]{35}$/, 'AIza 로 시작하는 39자'],
+        VITE_FIREBASE_AUTH_DOMAIN: [/^[a-z0-9-]+\.firebaseapp\.com$/, '프로젝트ID.firebaseapp.com'],
+        VITE_FIREBASE_PROJECT_ID: [/^[a-z0-9-]+$/, '영문 소문자·숫자·하이픈'],
+        VITE_FIREBASE_STORAGE_BUCKET: [/^[a-z0-9.-]+$/, '프로젝트ID.firebasestorage.app'],
+        VITE_FIREBASE_MESSAGING_SENDER_ID: [/^[0-9]+$/, '숫자만'],
+        VITE_FIREBASE_APP_ID: [/^1:[0-9]+:web:[0-9a-f]+$/, '1:숫자:web:영문숫자'],
+      }
+      const wrong = FIREBASE_ENV_NAMES.filter((name) => {
+        const [pattern] = formats[name]!
+        return !pattern.test(clean(env[name]!))
+      })
+      if (wrong.length === 0) {
+        console.log('\n[Firebase] 환경 변수 6개 확인됨(형식 정상) → 로그인·댓글 기능이 켜집니다.\n')
+      } else {
+        console.warn(
+          '\n[Firebase] 환경 변수 형식이 올바르지 않은 값이 있습니다. 로그인이 실패할 수 있습니다.\n' +
+            wrong
+              .map((name) => `  ${name}: 현재 ${clean(env[name]!).length}자 / 올바른 모양: ${formats[name]![1]}`)
+              .join('\n') +
+            '\n  Netlify > Site configuration > Environment variables 에서 값을 다시 붙여 넣고 재배포하세요.\n',
+        )
+      }
     } else {
       console.warn(
         `\n[Firebase] 환경 변수 ${missing.length}개가 없어 로그인·댓글 기능이 꺼진 상태로 빌드됩니다("로그인 (준비 중)").\n` +
