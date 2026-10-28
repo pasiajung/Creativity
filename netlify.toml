@@ -1,0 +1,14 @@
+# Netlify 배포 설정 파일입니다. 보통은 수정할 필요가 없습니다.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# 주소창에 /research/abc 처럼 직접 입력해도 페이지가 열리도록 하는 설정(SPA 리다이렉트)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

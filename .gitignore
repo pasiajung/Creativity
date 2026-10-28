@@ -1,0 +1,23 @@
+# 의존성·빌드 결과물
+node_modules
+dist
+dist-ssr
+*.local
+
+# 환경 변수(비밀값) — 절대 GitHub에 올리지 않습니다
+.env
+.env.*
+!.env.example
+
+# 로그·편집기
+npm-debug.log*
+*.log
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Firebase 에뮬레이터·캐시
+.firebase
+firebase-debug.log*
+firestore-debug.log*
