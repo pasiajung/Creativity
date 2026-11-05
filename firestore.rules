@@ -196,6 +196,14 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // 기사 동향 메뉴: AI 창의성 기사 대시보드의 결과 (관리자만 읽기·쓰기)
+    match /news_articles/{docId} {
+      allow read, write: if isAdmin();
+    }
+    match /news_meta/{docId} {
+      allow read, write: if isAdmin();
+    }
+
     // ── 위에 적지 않은 모든 경로는 읽기·쓰기 모두 거부 ─────
     match /{document=**} {
       allow read, write: if false;

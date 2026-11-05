@@ -36,7 +36,11 @@
     .err { color: var(--error); }
     details.card summary { cursor: pointer; font-weight: 600; }
     details.card .form { margin: 12px 0 0; }
-    #f-q { flex: 1; min-width: 180px; }
+    #f-q, #news-q { flex: 1; min-width: 180px; }
+    .card h3 a { color: var(--primary-dark); text-decoration: none; }
+    .card h3 a:hover { text-decoration: underline; }
+    .claim { font-size: .9rem; margin: 6px 0 0; }
+    .insight { margin: 0 0 8px; font-size: .9rem; }
 </style>
 </head>
 <body>
@@ -55,6 +59,7 @@
     <div id="app" style="display:none">
         <div class="tabs">
             <button class="tab active" data-tab="input">지식 창고 <span id="n-input"></span></button>
+            <button class="tab" data-tab="news">기사 동향 <span id="n-news"></span></button>
             <button class="tab" data-tab="output">결과물 <span id="n-output"></span></button>
         </div>
 
@@ -66,6 +71,18 @@
                 <select id="f-ktype"><option value="">지식 유형 전체</option><option>개념·이론</option><option>방법·절차</option><option>사례·경험</option><option>연구 결과</option><option>관점·주장</option></select>
             </div>
             <div id="input-list"></div>
+        </section>
+
+        <section id="panel-news" class="panel">
+            <div id="news-meta"></div>
+            <div class="filters">
+                <input id="news-q" placeholder="검색 (제목·요약·핵심 주장)">
+                <select id="news-cluster"><option value="">주제 전체</option></select>
+                <select id="news-type"><option value="">종류 전체</option><option value="paper">논문</option><option value="article">기사</option><option value="report">리포트·블로그</option><option value="book">책</option></select>
+                <select id="news-sentiment"><option value="">저자 태도 전체</option><option value="positive">긍정</option><option value="neutral">중립</option><option value="negative">부정</option></select>
+                <select id="news-verdict"><option value="">AI 창의성 결론 전체</option><option value="유">있음</option><option value="중립">결론 없음</option><option value="무">없음</option></select>
+            </div>
+            <div id="news-list"></div>
         </section>
 
         <section id="panel-output" class="panel">
@@ -86,7 +103,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, setDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, getDoc, addDoc, setDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 // ▼▼▼ 여기를 내 값으로 바꿉니다 (TUTORIAL.md 3-2단계, /create-site 가 도와줍니다) ▼▼▼
@@ -155,6 +172,7 @@ onAuthStateChanged(auth, async (user) => {
     try {
         await Promise.all([loadInput(), loadOutput()]);
         showApp(user, true);
+        loadNews(); // 실패해도 지식 창고·결과물 화면은 그대로 쓸 수 있게 따로 불러온다
     } catch (e) {
         showApp(user, false);
         if (e.code !== 'permission-denied') alert(`불러오기 실패: ${e.message}`);
@@ -165,9 +183,82 @@ $('logout').onclick = () => signOut(auth);
 
 document.querySelectorAll('.tab').forEach((b) => b.onclick = () => {
     document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === b));
-    $('panel-input').classList.toggle('active', b.dataset.tab === 'input');
-    $('panel-output').classList.toggle('active', b.dataset.tab === 'output');
+    document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('active', p.id === `panel-${b.dataset.tab}`));
 });
+
+// ---- 기사 동향 (AI 창의성 기사 대시보드의 결과. scripts/import-dashboard.mjs 가 매주 올린다) ----
+// 타인의 논문·기사를 AI가 요약한 것이다. 원문은 확인되지 않았으니 인용할 때는 링크로 원문을 확인한다.
+let newsDocs = [];
+const SENT = { positive: '긍정', neutral: '중립', negative: '부정' };
+const VERD = { '유': 'AI 창의성 있음', '무': 'AI 창의성 없음', '중립': '결론 없음' };
+const TYPE = { paper: '논문', article: '기사', report: '리포트·블로그', book: '책' };
+async function loadNews() {
+    try {
+        const [snap, metaSnap] = await Promise.all([getDocs(collection(db, 'news_articles')), getDoc(doc(db, 'news_meta', 'latest'))]);
+        newsDocs = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => String(b.published ?? '').localeCompare(String(a.published ?? '')));
+        $('n-news').textContent = `(${newsDocs.length})`;
+        renderNewsMeta(metaSnap.exists() ? metaSnap.data() : null);
+        const sel = $('news-cluster');
+        while (sel.options.length > 1) sel.remove(1);
+        [...new Set(newsDocs.map((d) => d.cluster).filter(Boolean))].forEach((v) => sel.add(new Option(v, v)));
+        renderNews();
+    } catch (e) {
+        $('n-news').textContent = '';
+        $('news-list').replaceChildren(el('p', {
+            text: e.code === 'permission-denied'
+                ? '기사 동향을 읽을 권한이 없습니다. Firestore 규칙에 news_articles, news_meta 칸이 있는지 확인하세요.'
+                : `기사 동향을 불러오지 못했습니다: ${e.message}`,
+            cls: 'msg err'
+        }));
+    }
+}
+function renderNewsMeta(meta) {
+    const box = $('news-meta');
+    box.replaceChildren();
+    if (!meta) {
+        box.appendChild(el('p', { text: '아직 가져온 기사가 없습니다. Claude Code에서 "기사 대시보드 결과를 가져와 주세요"라고 하거나 매주 자동 실행을 기다려 주세요.', cls: 'msg' }));
+        return;
+    }
+    const chips = Object.entries(meta.by_cluster ?? {}).sort((a, b) => b[1] - a[1]).map(([k, v]) => el('span', { text: `${k} ${v}`, cls: 'tag' }));
+    const card = el('div', { cls: 'card' }, [
+        el('h3', { text: `AI와 창의성 기사 동향 · ${meta.snapshot_date ?? ''} 기준 ${meta.total ?? 0}건` }),
+        el('div', { cls: 'tags' }, chips),
+        el('p', { text: '타인의 논문·기사를 대시보드의 AI가 요약한 것입니다. 원문은 확인되지 않았으니 인용할 때는 링크로 원문을 확인하세요.', cls: 'msg' })
+    ]);
+    if (meta.insights?.length) {
+        const det = el('details', {}, [el('summary', { text: `핵심 인사이트 ${meta.insights.length}가지${meta.insights_date ? ` (${meta.insights_date})` : ''}` })]);
+        meta.insights.forEach((i) => det.appendChild(el('p', { cls: 'insight' }, [el('strong', { text: i.title }), el('br'), i.detail])));
+        card.appendChild(det);
+    }
+    box.appendChild(card);
+}
+['news-cluster', 'news-type', 'news-sentiment', 'news-verdict'].forEach((id) => $(id).onchange = renderNews);
+$('news-q').oninput = renderNews;
+function renderNews() {
+    const f = { cluster: $('news-cluster').value, type: $('news-type').value, sentiment: $('news-sentiment').value, verdict: $('news-verdict').value };
+    const q = $('news-q').value.trim().toLowerCase();
+    const list = $('news-list');
+    list.replaceChildren();
+    const shown = newsDocs.filter((d) => Object.entries(f).every(([k, v]) => !v || d[k] === v)
+        && (!q || [d.title, d.summary, d.key_claim].some((x) => String(x ?? '').toLowerCase().includes(q))));
+    if (!shown.length) list.appendChild(el('p', { text: '표시할 기사가 없습니다.', cls: 'msg' }));
+    shown.forEach((d) => {
+        const title = el('h3');
+        if (/^https?:\/\//i.test(d.url ?? '')) {
+            const a = el('a', { text: d.title || d.url });
+            a.href = d.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+            title.appendChild(a);
+        } else title.textContent = d.title || '';
+        list.appendChild(el('div', { cls: 'card' }, [
+            title,
+            el('div', { cls: 'tags' }, [TYPE[d.type] ?? d.type, d.cluster, d.sentiment && `태도 ${SENT[d.sentiment] ?? d.sentiment}`, d.verdict && VERD[d.verdict], d.published, d.source]
+                .filter(Boolean).map((x) => el('span', { text: x, cls: 'tag' }))),
+            el('p', { text: d.summary || '', cls: 'msg' }),
+            d.key_claim ? el('p', { text: `핵심 주장: ${d.key_claim}`, cls: 'claim' }) : ''
+        ].filter(Boolean)));
+    });
+}
 
 // ---- 지식 창고 (읽기 전용: /ingest 가 scripts/upload.mjs 로 올린다) ----
 async function loadInput() {
