@@ -188,6 +188,14 @@ service cloud.firestore {
       }
     }
 
+    // ── 지식 자산화 관리자 페이지: 관리자만 읽기·쓰기 ──────
+    match /knowledge_input/{docId} {
+      allow read, write: if isAdmin();
+    }
+    match /knowledge_output/{docId} {
+      allow read, write: if isAdmin();
+    }
+
     // ── 위에 적지 않은 모든 경로는 읽기·쓰기 모두 거부 ─────
     match /{document=**} {
       allow read, write: if false;
